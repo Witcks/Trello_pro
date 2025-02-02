@@ -5,8 +5,8 @@ import { mapOrder } from '~/utils/sorts';
 import {
   DndContext,
   // PointerSensor,
-  MouseSensor,
-  TouchSensor,
+  // MouseSensor,
+  // TouchSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -17,6 +17,7 @@ import {
   // rectIntersection,
   getFirstCollision,
 } from '@dnd-kit/core';
+import { MouseSensor, TouchSensor } from '~/customLibraries/DnDKitSensers';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { generatePlacehoderCard } from '~/utils/formatters';
@@ -218,7 +219,6 @@ const BoardContent = ({ board }) => {
           activeDraggingCardData
         );
       } else {
-        console.log('hành động kéo thả thẻ trong cùng 1 cột');
         const oldCardIndex = oldColumnWhenDraggingCard?.cards?.findIndex(
           (column) => column._id === activeDragItemID
         );

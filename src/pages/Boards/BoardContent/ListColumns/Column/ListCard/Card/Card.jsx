@@ -44,8 +44,12 @@ const Card = ({ card }) => {
         cursor: 'pointer',
         boxShadow: '0 1px 1px rgba(0,0,0,0.2)',
         overflow: card?.FE_Placeholder ? 'hidden' : 'unset',
-        height: card?.FE_Placeholder ? '10px' : 'unset',
-        opacity: card?.FE_Placeholder ? 0 : 1,
+        border: '1px solid transparent',
+        '&:hover': {
+          borderColor: (theme) => theme.palette.primary.main,
+        }
+        // height: card?.FE_Placeholder ? '10px' : 'unset',
+        // opacity: card?.FE_Placeholder ? 0 : 1,
       }}>
       {card?.cover && (
         <CardMedia

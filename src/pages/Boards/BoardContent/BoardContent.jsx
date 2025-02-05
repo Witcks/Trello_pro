@@ -1,12 +1,11 @@
 /* eslint-disable react/prop-types */
 import Box from '@mui/material/Box';
 import ListColumn from './ListColumns/ListColumn';
-import { mapOrder } from '~/utils/sorts';
 import {
   DndContext,
   // PointerSensor,
-  MouseSensor,
-  TouchSensor,
+  // MouseSensor,
+  // TouchSensor,
   useSensor,
   useSensors,
   DragOverlay,
@@ -17,6 +16,7 @@ import {
   // rectIntersection,
   getFirstCollision,
 } from '@dnd-kit/core';
+import { MouseSensor, TouchSensor } from '~/customLibraries/DnDKitSensers';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { arrayMove } from '@dnd-kit/sortable';
 import { generatePlacehoderCard } from '~/utils/formatters';
@@ -29,7 +29,15 @@ const ACCTIVE_DRAG_ITEM_TYPE = {
   CARD: 'CARD',
 };
 
-const BoardContent = ({ board }) => {
+const BoardContent = ({
+  board,
+  createNewColumn,
+  createNewCard,
+  moveColumns,
+  moveCardIntheSameColumn,
+  moveCardToDifferentColumn,
+  deleteColumnDetail
+}) => {
   const [orderedColumns, setOrderedColumns] = useState([]);
   const [activeDragItemID, setActiveDragItemID] = useState(null);
   const [activeDragItemType, setActiveDragItemType] = useState(null);
@@ -60,7 +68,7 @@ const BoardContent = ({ board }) => {
   const sensors = useSensors(mouseSensor, touchSensor);
 
   useEffect(() => {
-    setOrderedColumns(mapOrder(board?.columns, board?.columnOrderIds, '_id'));
+    setOrderedColumns(board.columns);
   }, [board]);
 
   const findColumnByCardId = (cardId) => {
@@ -76,7 +84,8 @@ const BoardContent = ({ board }) => {
     over,
     activeColumn,
     activeDraggingCardID,
-    activeDraggingCardData
+    activeDraggingCardData,
+    triggerFrom
   ) => {
     setOrderedColumns((prevColumns) => {
       const overCardIndex = overColumn.cards.findIndex(
@@ -140,6 +149,10 @@ const BoardContent = ({ board }) => {
         );
       }
 
+      if (triggerFrom === 'handleDragEnd') {
+        moveCardToDifferentColumn(activeDraggingCardID, oldColumnWhenDraggingCard._id, nextOverColumn._id, nextColumns);
+      }
+
       return nextColumns;
     });
   };
@@ -185,7 +198,8 @@ const BoardContent = ({ board }) => {
         over,
         activeColumn,
         activeDraggingCardID,
-        activeDraggingCardData
+        activeDraggingCardData,
+        'handleDragOver'
       );
     }
   };
@@ -208,6 +222,7 @@ const BoardContent = ({ board }) => {
       if (!activeColumn || !overColumn) return;
 
       if (oldColumnWhenDraggingCard._id !== overColumn._id) {
+        //Kéo thả card giữa các `column` khác nhau
         moveCardBetweenDifferentColumns(
           overColumn,
           overCardID,
@@ -215,10 +230,11 @@ const BoardContent = ({ board }) => {
           over,
           activeColumn,
           activeDraggingCardID,
-          activeDraggingCardData
+          activeDraggingCardData,
+          'handleDragEnd'
         );
       } else {
-        console.log('hành động kéo thả thẻ trong cùng 1 cột');
+        //Kéo thả card trong cùng `column`
         const oldCardIndex = oldColumnWhenDraggingCard?.cards?.findIndex(
           (column) => column._id === activeDragItemID
         );
@@ -231,6 +247,9 @@ const BoardContent = ({ board }) => {
           oldCardIndex,
           newCardIndex
         );
+
+        const dndOrderedCardIds = dndOrderedCards.map((card) => card._id);
+
         setOrderedColumns((prevColumns) => {
           const nextColumns = cloneDeep(prevColumns);
 
@@ -238,10 +257,12 @@ const BoardContent = ({ board }) => {
             (column) => column._id === overColumn._id
           );
           taggetColumn.cards = dndOrderedCards;
-          taggetColumn.cardOrderIds = dndOrderedCards.map((card) => card._id);
+          taggetColumn.cardOrderIds = dndOrderedCardIds;
 
           return nextColumns;
         });
+
+        moveCardIntheSameColumn(dndOrderedCards, dndOrderedCardIds, oldColumnWhenDraggingCard._id);
       }
     }
 
@@ -258,8 +279,11 @@ const BoardContent = ({ board }) => {
           olColumnIndex,
           newColumnIndex
         );
-        // const dndOrderedColumnsIds = dndOrderedColumns.map((column) => column._id);
         setOrderedColumns(dndOrderedColumns);
+
+        moveColumns(dndOrderedColumns);
+
+        // const dndOrderedColumnsIds = dndOrderedColumns.map((column) => column._id);
       }
     }
 
@@ -340,7 +364,12 @@ const BoardContent = ({ board }) => {
             theme.palette.mode === 'dark' ? '#34495e' : '#1976d2',
           p: '10px 0',
         }}>
-        <ListColumn columns={orderedColumns} />
+        <ListColumn
+          columns={orderedColumns}
+          createNewColumn={createNewColumn}
+          createNewCard={createNewCard}
+          deleteColumnDetail={deleteColumnDetail}
+        />
         <DragOverlay dropAnimation={customDropAnimation}>
           {!activeDragItemType && null}
           {activeDragItemType === ACCTIVE_DRAG_ITEM_TYPE.COLUMN && (

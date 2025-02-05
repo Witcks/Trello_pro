@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { toast } from 'react-toastify';
 
 
-const ListColumn = ({ columns }) => {
+const ListColumn = ({ columns, createNewColumn, createNewCard, deleteColumnDetail }) => {
   const [openNewColumnForm, setOpenNewColumnForm] = useState(false);
   const toggleNewColumnForm = () => setOpenNewColumnForm(!openNewColumnForm);
 
@@ -24,6 +24,12 @@ const ListColumn = ({ columns }) => {
       toast.error('Column title is required');
       return;
     }
+
+    const newColumnData = {
+      title: newColumnTitle,
+    }
+
+    createNewColumn(newColumnData);
 
     toggleNewColumnForm();
     setNewColumnTitle('');
@@ -47,6 +53,8 @@ const ListColumn = ({ columns }) => {
           <Column
             key={column._id}
             column={column}
+            createNewCard={createNewCard}
+            deleteColumnDetail={deleteColumnDetail}
           />
         ))}
         {/* Add new column button */}

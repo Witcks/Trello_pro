@@ -18,15 +18,15 @@ import AddCardIcon from '@mui/icons-material/AddCard';
 import Button from '@mui/material/Button';
 import DragHandleIcon from '@mui/icons-material/DragHandle';
 import ListCard from './ListCard/ListCard';
-import { mapOrder } from '~/utils/sorts';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import CloseIcon from '@mui/icons-material/Close';
 import TextField from '@mui/material/TextField';
 import { toast } from 'react-toastify';
+import { useConfirm } from 'material-ui-confirm';
 
 
-const Column = ({ column }) => {
+const Column = ({ column, createNewCard, deleteColumnDetail }) => {
   const {
     attributes,
     listeners,
@@ -52,22 +52,41 @@ const Column = ({ column }) => {
   const handleClose = () => {
     setAnchorEl(null);
   };
-  const orderedCards = mapOrder(column?.cards, column?.cardOrderIds, '_id');
+  const orderedCards = column.cards;
 
   const [openNewCardForm, setOpenNewCardForm] = useState(false);
   const toggleNewCardForm = () => setOpenNewCardForm(!openNewCardForm);
 
   const [newCardTitle, setNewCardTitle] = useState('');
 
-  const addNewCard = () => {
+  const addNewCard = async () => {
     if (!newCardTitle) {
       toast.error('Card title is required', { position: 'bottom-right' });
       return;
     }
-    // console.log(newCardTitle);
+
+    const newCardData = {
+      title: newCardTitle,
+      columnId: column._id,
+    }
+
+    await createNewCard(newCardData);
 
     toggleNewCardForm();
     setNewCardTitle('');
+  }
+
+  const confirm = useConfirm();
+
+  const handleDeleteColumn = () => {
+    confirm({
+      title: 'Delete Column',
+      description: 'Are you sure you want to delete this column?',
+      confirmationText: 'Delete',
+      cancellationText: 'Cancel',
+    }).then(() => {
+      deleteColumnDetail(column._id);
+    }).catch(() => {});
   }
 
 
@@ -120,6 +139,7 @@ const Column = ({ column }) => {
               anchorEl={anchorEl}
               open={open}
               onClose={handleClose}
+              onClick={handleClose}
               anchorOrigin={{
                 vertical: 'top',
                 horizontal: 'left',
@@ -128,9 +148,9 @@ const Column = ({ column }) => {
                 vertical: 'top',
                 horizontal: 'left',
               }}>
-              <MenuItem>
+              <MenuItem onClick={toggleNewCardForm} sx={{ '&:hover': { color: 'success.light', '& .add-card-icon': { color: 'success.light' } } }}>
                 <ListItemIcon>
-                  <AddCardIcon fontSize="small" />
+                  <AddCardIcon className='add-card-icon' fontSize="small" />
                 </ListItemIcon>
                 <ListItemText>Add new card</ListItemText>
               </MenuItem>
@@ -154,11 +174,11 @@ const Column = ({ column }) => {
               </MenuItem>
 
               <Divider />
-              <MenuItem>
+              <MenuItem onClick={handleDeleteColumn} sx={{ '&:hover': { color: 'warning.dark', '& .delete-forever-itcon': { color: 'warning.dark' } } }}>
                 <ListItemIcon>
-                  <DeleteIcon fontSize="small" />
+                  <DeleteIcon className='delete-forever-itcon' fontSize="small" />
                 </ListItemIcon>
-                <ListItemText>Remove this column</ListItemText>
+                <ListItemText>Delete this column</ListItemText>
               </MenuItem>
               <MenuItem>
                 <ListItemIcon>
